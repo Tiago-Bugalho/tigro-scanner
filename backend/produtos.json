@@ -1,4 +1,5 @@
 [
-  { "codigo": "12345", "nome": "Produto A", "preco": 10, "quantidade": 0 },
-  { "codigo": "67890", "nome": "Produto B", "preco": 20, "quantidade": 0 }
+  { "codigo": "12345", "nome": "Refrigerante Cola", "preco": 5.50 },
+  { "codigo": "67890", "nome": "Batata Chips", "preco": 7.00 },
+  { "codigo": "11111", "nome": "Chocolate Tigro", "preco": 9.99 }
 ]

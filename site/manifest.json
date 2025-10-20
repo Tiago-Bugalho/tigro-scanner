@@ -1,16 +1,11 @@
 {
   "name": "Tigro Scanner",
   "short_name": "Tigro",
-  "start_url": "index.html",
+  "start_url": ".",
   "display": "standalone",
-  "background_color": "#1e1e1e",
-  "theme_color": "#00ff00",
-  "description": "Scanner de QR code para o Tigro PDV",
+  "background_color": "#111111",
+  "theme_color": "#ff9800",
   "icons": [
-    {
-      "src": "tigro.png",
-      "sizes": "192x192",
-      "type": "image/png"
-    }
+    { "src": "tigro.png", "sizes": "192x192", "type": "image/png" }
   ]
 }

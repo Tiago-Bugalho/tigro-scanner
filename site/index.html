@@ -1,65 +1,61 @@
 <!DOCTYPE html>
-<html lang="pt-br">
+<html lang="pt-BR">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Tigro Scanner</title>
-<link rel="manifest" href="manifest.json">
-<style>
-body { font-family: Arial; text-align:center; background:#1e1e1e; color:#fff; margin:0; padding:0; }
-h1 { color:#00ff00; margin-top:20px; }
-video { width:90%; max-width:400px; border:2px solid #00ff00; border-radius:10px; margin:10px 0; }
-#mensagem { font-size:18px; min-height:24px; }
-</style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tigro Scanner</title>
+  <link rel="manifest" href="manifest.json">
+  <script src="js/jsQR.js"></script>
+  <style>
+    body { font-family: Arial; background:#111; color:#fff; text-align:center; }
+    video { width:90%; max-width:400px; margin-top:15px; border:3px solid #ff9800; border-radius:10px; }
+    .produto { background:#222; padding:10px; border-radius:8px; width:90%; margin:10px auto; }
+  </style>
 </head>
 <body>
-<h1>Tigro Scanner</h1>
-<video id="video" autoplay></video>
-<p id="mensagem">Aponte a câmera para o QR code</p>
+  <h2>Tigro Scanner</h2>
+  <video id="camera" autoplay></video>
+  <p id="info">Aponte para o QR Code...</p>
+  <div id="produto"></div>
 
-<script src="js/jsQR.js"></script>
-<script>
-const BACKEND_URL = 'http://192.168.2.156:3000/adicionar-produto';
+  <script>
+    const video = document.getElementById("camera");
+    const info = document.getElementById("info");
+    const produtoDiv = document.getElementById("produto");
 
-const video = document.getElementById('video');
-const mensagem = document.getElementById('mensagem');
+    navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } })
+      .then(stream => {
+        video.srcObject = stream;
+        const canvas = document.createElement("canvas");
+        const ctx = canvas.getContext("2d");
 
-navigator.mediaDevices.getUserMedia({video:{facingMode:"environment"}})
-.then(stream => { video.srcObject = stream; })
-.catch(err => { mensagem.textContent = "Erro ao acessar câmera: "+err; });
-
-const canvas = document.createElement('canvas');
-const context = canvas.getContext('2d');
-let ultimoCodigo = '';
-
-function scan(){
-    if(video.readyState===video.HAVE_ENOUGH_DATA){
-        canvas.width = video.videoWidth;
-        canvas.height = video.videoHeight;
-        context.drawImage(video,0,0,canvas.width,canvas.height);
-        const imageData = context.getImageData(0,0,canvas.width,canvas.height);
-        const code = jsQR(imageData.data,imageData.width,imageData.height);
-        if(code && code.data!==ultimoCodigo){
-            ultimoCodigo = code.data;
-            fetch(BACKEND_URL,{
-                method:'POST',
-                headers:{'Content-Type':'application/json'},
-                body:JSON.stringify({codigo:code.data})
-            }).then(res=>res.json())
-              .then(data=>{ mensagem.textContent=data.sucesso ? `Produto ${data.produto.nome} adicionado!` : data.mensagem; })
-              .catch(err=>mensagem.textContent="Erro ao enviar produto");
-        }
-    }
-    requestAnimationFrame(scan);
-}
-
-video.addEventListener('loadedmetadata',()=>scan());
-
-if('serviceWorker' in navigator){
-    navigator.serviceWorker.register('service-worker.js')
-    .then(()=>console.log("Service Worker registrado!"))
-    .catch(err=>console.log("Erro SW:",err));
-}
-</script>
+        setInterval(() => {
+          if (video.readyState === video.HAVE_ENOUGH_DATA) {
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+            const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            const code = jsQR(imageData.data, imageData.width, imageData.height);
+            if (code) {
+              info.textContent = "QR Detectado: " + code.data;
+              fetch(`http://192.168.2.156:3000/produto/${code.data}`)
+                .then(r => r.json())
+                .then(p => {
+                  if (p.erro) {
+                    produtoDiv.innerHTML = `<p>❌ ${p.erro}</p>`;
+                  } else {
+                    produtoDiv.innerHTML = `
+                      <div class="produto">
+                        <h3>${p.nome}</h3>
+                        <p>💰 R$ ${p.preco.toFixed(2)}</p>
+                      </div>`;
+                  }
+                });
+            }
+          }
+        }, 1000);
+      })
+      .catch(() => info.textContent = "❌ Erro ao acessar câmera");
+  </script>
 </body>
 </html>
